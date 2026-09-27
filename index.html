@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>삼각형 작도</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:#e8edf5;min-height:100vh;padding:48px 10px 30px;}
+.hd{text-align:center;padding:8px 0 12px;}
+.hd h1{font-size:18px;font-weight:900;color:#1e3a8a;}
+.hd p{font-size:12px;color:#64748b;margin-top:2px;}
+
+/* 탭 */
+.tabs{display:flex;gap:5px;margin-bottom:12px;}
+.tab{flex:1;padding:8px 3px;font-size:11px;font-weight:700;
+  border:2px solid #c7d2e8;border-radius:12px;background:#fff;
+  color:#64748b;cursor:pointer;text-align:center;line-height:1.5;position:relative;}
+.tab.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+.tab.done{background:#dcfce7;color:#15803d;border-color:#86efac;}
+.tab.locked{opacity:.4;cursor:not-allowed;}
+.tab-n{display:block;font-size:15px;font-weight:900;}
+
+/* 카드 */
+.card{background:#fff;border-radius:16px;border:1.5px solid #dde3ef;
+  overflow:hidden;box-shadow:0 2px 14px rgba(30,58,138,.08);}
+.ch{padding:12px 14px 8px;}
+.bdg{display:inline-block;color:#fff;font-size:11px;font-weight:700;
+  padding:3px 10px;border-radius:20px;margin-bottom:5px;}
+.ct{font-size:15px;font-weight:800;color:#0f172a;margin-bottom:2px;}
+.cs{font-size:12px;color:#64748b;}
+
+/* 단계 안내 */
+.step-box{background:#eff6ff;border-left:4px solid #2563eb;
+  padding:8px 13px;font-size:12.5px;color:#1e3a8a;font-weight:600;
+  display:flex;align-items:center;gap:7px;}
+
+/* 도구 */
+.tools{display:flex;gap:2px;padding:6px 8px;
+  background:#f1f5fb;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;}
+.tool{flex:1;padding:7px 1px;font-size:10px;font-weight:700;
+  border:2px solid #c7d2e8;border-radius:8px;background:#fff;
+  color:#374151;cursor:pointer;text-align:center;line-height:1.3;
+  min-width:0;overflow:hidden;}
+.tool .ti{font-size:15px;display:block;margin-bottom:1px;}
+.tool.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+
+/* 반지름박스 */
+.rbox{display:none;background:#fef3c7;border-left:4px solid #f59e0b;
+  padding:7px 11px;font-size:12px;color:#78350f;font-weight:600;
+  align-items:center;gap:7px;}
+.rbox.show{display:flex;}
+.rbtn{margin-left:auto;padding:3px 8px;font-size:11px;font-weight:700;
+  background:#f59e0b;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+
+/* 힌트 */
+.hbox{background:#fffbeb;border-left:4px solid #fbbf24;
+  padding:7px 11px;font-size:12px;color:#78350f;cursor:pointer;
+  display:flex;gap:6px;align-items:flex-start;}
+.htog{font-size:11px;color:#d97706;font-weight:700;margin-bottom:2px;}
+
+/* 상태바 */
+.sbar{display:flex;align-items:center;gap:7px;padding:7px 12px;
+  font-size:12.5px;font-weight:600;min-height:38px;
+  border-bottom:1px solid #e2e8f0;background:#f8fafc;color:#475569;}
+.sbar.ok{background:#f0fdf4;color:#166534;}
+.sbar.err{background:#fef2f2;color:#991b1b;}
+.sbar.sel{background:#fffbeb;color:#78350f;}
+.sdot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex-shrink:0;}
+.sbar.ok .sdot{background:#22c55e;}
+.sbar.err .sdot{background:#ef4444;}
+.sbar.sel .sdot{background:#f59e0b;}
+
+/* 메인 캔버스 영역: 왼쪽(조건) + 오른쪽(작도) */
+.canvas-wrap{display:flex;border-top:1px solid #e2e8f0;width:100%;overflow:hidden;}
+.pane{width:50%;flex-shrink:0;display:flex;flex-direction:column;min-width:0;}
+.pane-label{font-size:11px;font-weight:700;text-align:center;
+  padding:5px 4px;border-bottom:1px solid #e8edf5;}
+.pane-label.given{background:#f0f7ff;color:#1d4ed8;}
+.pane-label.work{background:#faf5ff;color:#7c3aed;}
+.divider{width:2px;background:#e2e8f0;flex-shrink:0;}
+canvas{display:block;touch-action:none;width:100% !important;}
+.work-canvas{cursor:crosshair;}
+
+/* 하단 */
+.bbar{display:flex;gap:5px;padding:9px 10px;
+  background:#f1f5fb;border-top:1px solid #e2e8f0;align-items:center;}
+.bb{padding:9px 12px;font-size:12.5px;font-weight:600;
+  border:1.5px solid #c7d2e8;border-radius:8px;background:#fff;cursor:pointer;color:#374151;}
+.bb.del{color:#dc2626;border-color:#fca5a5;}
+.cb{margin-left:auto;padding:9px 16px;font-size:13px;font-weight:800;
+  border:none;border-radius:8px;cursor:pointer;color:#fff;}
+.dmsg{display:none;background:#f0fdf4;border:2px solid #86efac;border-radius:9px;
+  margin:9px 11px;padding:11px;text-align:center;font-size:13.5px;font-weight:700;
+  color:#166534;line-height:1.7;}
+
+/* 타이머바 */
+#timerbar{position:fixed;top:0;left:0;right:0;height:38px;
+  background:linear-gradient(90deg,#1d4ed8,#7c3aed);
+  color:#fff;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:500;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+#timerbar .tl{font-size:12px;font-weight:700;opacity:.9;}
+#timerbar .tm{font-size:18px;font-weight:900;letter-spacing:2px;}
+#timerbar .tr{font-size:11px;font-weight:600;opacity:.85;}
+
+/* 완성 팝업 */
+#popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:9999;align-items:center;justify-content:center;}
+.popup-box{background:#fff;border-radius:20px;padding:26px 22px 20px;
+  max-width:300px;width:88%;text-align:center;
+  box-shadow:0 10px 50px rgba(0,0,0,.3);animation:popIn .35s ease;}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.pop-close{width:100%;padding:12px;font-size:15px;font-weight:800;
+  background:#1d4ed8;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:14px;}
+</style>
+</head>
+<body>
+<!-- 타이머바 -->
+<div id="timerbar">
+  <div class="tl">⏱ 작도 시간</div>
+  <div class="tm" id="tmr">00:00</div>
+  <div class="tr" id="tmr-stat">진행 중</div>
+</div>
+
+<div class="hd"><h1>📐 삼각형 작도</h1><p>왼쪽 조건을 보고 오른쪽에 직접 작도하세요</p></div>
+
+<div class="tabs">
+  <button class="tab on"     id="tab0" onclick="goTab(0)"><span class="tab-n">①</span>세 변(SSS)</button>
+  <button class="tab locked" id="tab1" onclick="goTab(1)"><span class="tab-n">②</span>두변+각(SAS) 🔒</button>
+  <button class="tab locked" id="tab2" onclick="goTab(2)"><span class="tab-n">③</span>한변+두각(ASA) 🔒</button>
+</div>
+
+<!-- 활동 ① -->
+<div class="card" id="panel0">
+  <div class="ch">
+    <div class="bdg" style="background:#1d4ed8">활동 ① · 세 변의 길이 (SSS)</div>
+    <div class="ct">삼각형 ABC 작도</div>
+    <div class="cs">왼쪽에 세 선분 a, b, c가 주어져 있어요. 컴퍼스로 각 선분의 길이를 재어 오른쪽에 삼각형을 작도하세요.</div>
+  </div>
+  <div class="step-box"><span>📋</span><span id="sd0">① 왼쪽 선분 a를 컴퍼스로 재고, A점에서 원을 그리세요</span></div>
+  <div class="tools">
+    <button class="tool" id="t0-seg"     onclick="setTool(0,'seg')"><span class="ti">✏️</span>선분</button>
+    <button class="tool" id="t0-ray"     onclick="setTool(0,'ray')"><span class="ti">📏</span>반직선</button>
+    <button class="tool on" id="t0-compass" onclick="setTool(0,'compass')"><span class="ti">📐</span>컴퍼스</button>
+    <button class="tool" id="t0-inter"   onclick="setTool(0,'inter')"><span class="ti">🔵</span>교점</button>
+  </div>
+  <div class="rbox" id="rbox0"><span>📐</span><span id="rlbl0">반지름 설정됨</span><button class="rbtn" onclick="clearR(0)">✕</button></div>
+  <div class="hbox" onclick="toggleH(0)">
+    <div style="flex:1;font-size:12px;color:#78350f;line-height:1.6">
+      <div class="htog" id="htog0">▶ 작도 순서 보기</div>
+      <div id="hcont0" style="display:none">
+        <b>① 컴퍼스</b> 왼쪽 <span style="color:#1d4ed8">선분 a</span> 길이 재기 → 오른쪽 B에서 원<br>
+        <b>② 컴퍼스</b> 왼쪽 <span style="color:#059669">선분 c</span> 길이 재기 → 오른쪽 A에서 원<br>
+        <b>③ 교점</b> 두 원의 교점 → C 표시<br>
+        <b>④ 선분</b> A-B, B-C, A-C 연결
+      </div>
+    </div>
+  </div>
+  <div class="sbar" id="sb0"><div class="sdot"></div><span id="sm0">📐 왼쪽 선분 a의 끝점을 터치 → 반대쪽 터치해서 길이를 재세요</span></div>
+  <div class="canvas-wrap">
+    <div class="pane">
+      <div class="pane-label given">📌 주어진 조건</div>
+      <canvas id="ref0"></canvas>
+    </div>
+    <div class="divider"></div>
+    <div class="pane">
+      <div class="pane-label work">✏️ 작도 공간</div>
+      <canvas id="cv0" class="work-canvas"></canvas>
+    </div>
+  </div>
+  <div class="bbar">
+    <button class="bb" onclick="doUndo(0)">↩ 되돌리기</button>
+    <button class="bb del" onclick="doReset(0)">🗑 지우기</button>
+    <button class="cb" style="background:#1d4ed8" onclick="doCheck(0)">✅ 완성 확인</button>
+  </div>
+  <div class="dmsg" id="dm0">🎉 삼각형 ABC 완성!<br>세 변의 길이로 삼각형을 작도했어요!</div>
+</div>
+
+<!-- 활동 ② -->
+<div class="card" id="panel1" style="display:none">
+  <div class="ch">
+    <div class="bdg" style="background:#059669">활동 ② · 두 변의 길이와 끼인각 (SAS)</div>
+    <div class="ct">삼각형 ABC 작도</div>
+    <div class="cs">왼쪽 그림의 두 변 길이와 끼인각을 <b>각 옮기기 방법</b>으로 오른쪽에 삼각형을 작도하세요.</div>
+  </div>
+  <div class="step-box"><span>📋</span><span id="sd1">① ✏️ 선분 AB를 긋고 B에서 오른쪽으로 반직선을 그으세요</span></div>
+  <div class="tools">
+    <button class="tool" id="t1-seg"     onclick="setTool(1,'seg')"><span class="ti">✏️</span>선분</button>
+    <button class="tool" id="t1-ray"     onclick="setTool(1,'ray')"><span class="ti">📏</span>반직선</button>
+    <button class="tool on" id="t1-compass" onclick="setTool(1,'compass')"><span class="ti">📐</span>컴퍼스</button>
+    <button class="tool" id="t1-inter"   onclick="setTool(1,'inter')"><span class="ti">🔵</span>교점</button>
+  </div>
+  <div class="rbox" id="rbox1"><span>📐</span><span id="rlbl1">반지름 설정됨</span><button class="rbtn" onclick="clearR(1)">✕</button></div>
+  <div class="hbox" onclick="toggleH(1)">
+    <div style="flex:1;font-size:12px;color:#78350f;line-height:1.6">
+      <div class="htog" id="htog1">▶ 작도 순서 보기</div>
+      <div id="hcont1" style="display:none">
+        <b>① 선분</b> 선분 AB를 긋는다<br>
+        <b>② 반직선</b> B에서 오른쪽으로 반직선을 긋는다<br>
+        <b>③ 컴퍼스</b> B에서 원 → 왼쪽 각의 두 변과 교점 P, Q 찍기<br>
+        <b>④ 컴퍼스</b> 왼쪽 P→Q 거리를 잰다<br>
+        <b>⑤ 컴퍼스</b> 오른쪽 P'에서 같은 거리로 원 → 교점 Q' 찍기<br>
+        <b>⑥ 반직선</b> B에서 Q' 방향으로 반직선 (끼인각 완성)<br>
+        <b>⑦ 컴퍼스</b> 선분 b 길이 재고 B에서 원 → 교점 C<br>
+        <b>⑧ 선분</b> A-B, A-C, B-C 연결
+      </div>
+    </div>
+  </div>
+  <div class="sbar" id="sb1"><div class="sdot"></div><span id="sm1">✏️ 선분 AB를 긋고 → B에서 오른쪽 방향 반직선 → B에서 컴퍼스로 원 그리기</span></div>
+  <div class="canvas-wrap">
+    <div class="pane">
+      <div class="pane-label given">📌 주어진 조건</div>
+      <canvas id="ref1"></canvas>
+    </div>
+    <div class="divider"></div>
+    <div class="pane">
+      <div class="pane-label work">✏️ 작도 공간</div>
+      <canvas id="cv1" class="work-canvas"></canvas>
+    </div>
+  </div>
+  <div class="bbar">
+    <button class="bb" onclick="doUndo(1)">↩ 되돌리기</button>
+    <button class="bb del" onclick="doReset(1)">🗑 지우기</button>
+    <button class="cb" style="background:#059669" onclick="doCheck(1)">✅ 완성 확인</button>
+  </div>
+  <div class="dmsg" id="dm1">🎉 삼각형 ABC 완성!<br>두 변과 끼인각으로 삼각형을 작도했어요!</div>
+</div>
+
+<!-- 활동 ③ -->
+<div class="card" id="panel2" style="display:none">
+  <div class="ch">
+    <div class="bdg" style="background:#7c3aed">활동 ③ · 한 변의 길이와 양 끝 각 (ASA)</div>
+    <div class="ct">삼각형 ABC 작도</div>
+    <div class="cs">왼쪽 그림의 한 변 길이와 두 각을 이용해 오른쪽에 삼각형을 작도하세요.</div>
+  </div>
+  <div class="step-box"><span>📋</span><span id="sd2">① 선분 AB를 긋고, A·B에서 각도 방향으로 반직선을 그으세요</span></div>
+  <div class="tools">
+    <button class="tool" id="t2-seg"     onclick="setTool(2,'seg')"><span class="ti">✏️</span>선분</button>
+    <button class="tool" id="t2-ray"     onclick="setTool(2,'ray')"><span class="ti">📏</span>반직선</button>
+    <button class="tool on" id="t2-compass" onclick="setTool(2,'compass')"><span class="ti">📐</span>컴퍼스</button>
+    <button class="tool" id="t2-inter"   onclick="setTool(2,'inter')"><span class="ti">🔵</span>교점</button>
+  </div>
+  <div class="rbox" id="rbox2"><span>📐</span><span id="rlbl2">반지름 설정됨</span><button class="rbtn" onclick="clearR(2)">✕</button></div>
+  <div class="hbox" onclick="toggleH(2)">
+    <div style="flex:1;font-size:12px;color:#78350f;line-height:1.6">
+      <div class="htog" id="htog2">▶ 작도 순서 보기</div>
+      <div id="hcont2" style="display:none">
+        <b>① 선분</b> 선분 AB 긋기<br>
+        <b>② 반직선</b> A에서 ∠A 방향 반직선<br>
+        <b>③ 반직선</b> B에서 ∠B 방향 반직선<br>
+        <b>④ 교점</b> 두 반직선 교점 → C<br>
+        <b>⑤ 선분</b> A-C, B-C 연결
+      </div>
+    </div>
+  </div>
+  <div class="sbar" id="sb2"><div class="sdot"></div><span id="sm2">✏️ 선분 도구로 선분 AB를 먼저 그으세요</span></div>
+  <div class="canvas-wrap">
+    <div class="pane">
+      <div class="pane-label given">📌 주어진 조건</div>
+      <canvas id="ref2"></canvas>
+    </div>
+    <div class="divider"></div>
+    <div class="pane">
+      <div class="pane-label work">✏️ 작도 공간</div>
+      <canvas id="cv2" class="work-canvas"></canvas>
+    </div>
+  </div>
+  <div class="bbar">
+    <button class="bb" onclick="doUndo(2)">↩ 되돌리기</button>
+    <button class="bb del" onclick="doReset(2)">🗑 지우기</button>
+    <button class="cb" style="background:#7c3aed" onclick="doCheck(2)">✅ 완성 확인</button>
+  </div>
+  <div class="dmsg" id="dm2">🎉 삼각형 ABC 완성!<br>한 변과 두 각으로 삼각형을 작도했어요!</div>
+</div>
+
+<!-- 팝업 -->
+<div id="popup">
+  <div class="popup-box">
+    <div style="font-size:52px;margin-bottom:6px">🏆</div>
+    <div style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:4px">3가지 작도 완성!</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:14px">컴퍼스와 자로 완벽하게 작도했어요!</div>
+    <div style="background:linear-gradient(135deg,#eff6ff,#ede9fe);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;color:#64748b;margin-bottom:4px">⏱ 총 소요 시간</div>
+      <div id="pop-time" style="font-size:40px;font-weight:900;color:#1d4ed8;letter-spacing:3px">00:00</div>
+    </div>
+    <button class="pop-close" onclick="document.getElementById('popup').style.display='none'">닫기</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  조건 그림 데이터 (픽셀 단위로 실제 그림 좌표 지정)
+// ============================================================
+// 각 활동의 기준 삼각형: 조건 그림과 작도 그림 모두 동일 스케일
+// 캔버스 절반 너비 기준으로 배치
+const COND = [
+  // ① SSS: AB=6u, BC=5u, CA=4u  (u=단위)
+  {type:'SSS', AB:6, BC:5, CA:4,
+   // 실제 삼각형 꼭짓점 (조건 그림 좌표, 단위 픽셀로 변환)
+   // 코사인 법칙으로 C 좌표 계산
+   // BC=5,CA=4,AB=6 → cosB=(36+25-16)/(2*6*5)=45/60=0.75 → B=41.4°
+   angB: Math.acos((36+25-16)/(2*6*5))*180/Math.PI,
+   angA: Math.acos((36+16-25)/(2*6*4))*180/Math.PI,
+  },
+  // ② SAS: AB=6u, ∠B=50°, BC=5u
+  {type:'SAS', AB:6, angB:50, BC:5},
+  // ③ ASA: AB=6u, ∠A=50°, ∠B=60°
+  {type:'ASA', AB:6, angA:50, angB:60},
+];
+
+// ============================================================
+//  캔버스 / 스케일
+// ============================================================
+const REF_CVS=[0,1,2].map(i=>document.getElementById('ref'+i));
+const WRK_CVS=[0,1,2].map(i=>document.getElementById('cv'+i));
+const REF_CTX=REF_CVS.map(c=>c.getContext('2d'));
+const WRK_CTX=WRK_CVS.map(c=>c.getContext('2d'));
+const CVH=260; // 캔버스 높이
+let PANE_W=160; // 절반 너비 (초기값, resize로 갱신)
+const DPR=window.devicePixelRatio||1;
+// UNIT: 선분 a(가장 긴 변 6단위)가 패널 너비의 70% 이하가 되도록
+const UNIT=()=>{
+  const maxLen=6; // 가장 긴 변
+  const maxPx=Math.floor(PANE_W*0.68/maxLen);
+  return Math.max(16, Math.min(maxPx, 26));
+};
+
+function resizeAll(){
+  // 현재 보이는 패널 또는 panel0 기준으로 너비 계산
+  let refEl=document.getElementById('panel0');
+  [0,1,2].forEach(j=>{
+    const p=document.getElementById('panel'+j);
+    if(p&&p.style.display!=='none') refEl=p;
+  });
+  const fullW=(refEl||document.body).clientWidth-4;
+  PANE_W=Math.floor((fullW-2)/2);
+  [0,1,2].forEach(i=>{
+    [REF_CVS[i],WRK_CVS[i]].forEach(c=>{
+      c.style.width=PANE_W+'px'; c.style.height=CVH+'px';
+      c.width=Math.round(PANE_W*DPR); c.height=Math.round(CVH*DPR);
+    });
+    REF_CTX[i].setTransform(DPR,0,0,DPR,0,0);
+    WRK_CTX[i].setTransform(DPR,0,0,DPR,0,0);
+  });
+}
+
+// 삼각형 꼭짓점 계산 (A=왼쪽, B=오른쪽, C=위)
+function triVerts(i, ctx_w, ctx_h){
+  const u=UNIT(), cond=COND[i];
+  const ab=cond.AB*u;
+  const cx=ctx_w/2, cy=ctx_h; // 기준 중앙 아래
+  const ax=cx-ab/2, ay=ctx_h*0.78;
+  const bx=cx+ab/2, by=ay;
+  let Cx,Cy;
+  if(cond.type==='SSS'){
+    const bc=cond.BC*u, ca=cond.CA*u;
+    // 코사인 법칙으로 C 계산
+    const cosB=(ab*ab+bc*bc-ca*ca)/(2*ab*bc);
+    const sinB=Math.sqrt(1-cosB*cosB);
+    Cx=bx-bc*cosB; Cy=by-bc*sinB;
+  } else if(cond.type==='SAS'){
+    const bc=cond.BC*u;
+    const angBrad=(180-cond.angB)*Math.PI/180; // B에서 왼쪽 위 방향
+    Cx=bx+bc*Math.cos(Math.PI-cond.angB*Math.PI/180);
+    Cy=by-bc*Math.sin(cond.angB*Math.PI/180);
+  } else { // ASA
+    const angArad=cond.angA*Math.PI/180;
+    const angBrad=cond.angB*Math.PI/180;
+    // 두 직선 교점
+    const t=(bx-ax)*Math.sin(angBrad) / Math.sin(angArad+angBrad);
+    Cx=ax+t*Math.cos(angArad);
+    Cy=ay-t*Math.sin(angArad);
+  }
+  return{A:{x:ax,y:ay},B:{x:bx,y:by},C:{x:Cx,y:Cy}};
+}
+
+// ============================================================
+//  조건 그림 그리기 (왼쪽 패널)
+// ============================================================
+function drawRef(i){
+  const ctx=REF_CTX[i], W=PANE_W, H=CVH;
+  const u=UNIT(), cond=COND[i];
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f0f7ff'; ctx.fillRect(0,0,W,H);
+  // 격자
+  ctx.strokeStyle='rgba(100,116,139,.08)'; ctx.lineWidth=.6;
+  for(let x=u;x<W;x+=u){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=u;y<H;y+=u){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // ── ① SSS: 세 선분을 따로 제시 ──────────────────────────
+  if(cond.type==='SSS'){
+    // 세 선분 세로로 배치 (각각 중앙 정렬)
+    const segs=[
+      {len:cond.AB*u, col:'#1d4ed8', lbl:'a'},
+      {len:cond.BC*u, col:'#dc2626', lbl:'b'},
+      {len:cond.CA*u, col:'#059669', lbl:'c'},
+    ];
+    const rows=3, rowH=Math.floor(H/rows);
+
+    segs.forEach((seg,k)=>{
+      const cx=W/2, cy=rowH*(k+0.5);
+      const x1=cx-seg.len/2, x2=cx+seg.len/2;
+
+      // 선분
+      ctx.beginPath();ctx.moveTo(x1,cy);ctx.lineTo(x2,cy);
+      ctx.strokeStyle=seg.col;ctx.lineWidth=3;ctx.setLineDash([]);ctx.stroke();
+
+      // 끝점 — 터치 가능 표시 (큰 원)
+      [x1,x2].forEach(ex=>{
+        // 바깥 스냅 링
+        ctx.beginPath();ctx.arc(ex,cy,11,0,2*Math.PI);
+        ctx.strokeStyle=seg.col;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+        // 안쪽 점
+        ctx.beginPath();ctx.arc(ex,cy,4.5,0,2*Math.PI);
+        ctx.fillStyle=seg.col;ctx.fill();
+      });
+
+      // 레이블 (중앙 위)
+      ctx.font='bold 13px sans-serif';ctx.fillStyle=seg.col;
+      ctx.textAlign='center';ctx.fillText(seg.lbl,cx,cy-14);
+      ctx.textAlign='left';
+
+      // 구분 안내선 (행 경계, 마지막 제외)
+      if(k<2){
+        ctx.beginPath();ctx.moveTo(8,rowH*(k+1));ctx.lineTo(W-8,rowH*(k+1));
+        ctx.strokeStyle='rgba(203,213,225,.6)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+      }
+    });
+
+    // 사용 안내
+    ctx.font='10.5px sans-serif';ctx.fillStyle='#64748b';ctx.textAlign='center';
+    ctx.fillText('📐 끝점(○) 터치 → 반대쪽 끝점 터치 = 길이 재기',W/2,H-6);
+    ctx.textAlign='left';
+    return;
+  }
+
+  // ── ② SAS: 선분 a, 선분 b, 끼인각 — 모두 중앙 정렬 ──────────
+  if(cond.type==='SAS'){
+    // 3등분: 선분a / 선분b / 끼인각 — 모두 중앙 정렬
+    const cx2=W/2;
+    const rowH=Math.floor(H/3);
+
+    // ─ 선분 a (AB) - 위쪽 ─
+    const cy0=Math.floor(rowH*0.52);
+    const la=cond.AB*u;
+    const ax1=cx2-la/2, ax2=cx2+la/2;
+    ctx.beginPath();ctx.moveTo(ax1,cy0);ctx.lineTo(ax2,cy0);
+    ctx.strokeStyle='#1d4ed8';ctx.lineWidth=3;ctx.setLineDash([]);ctx.stroke();
+    [ax1,ax2].forEach(ex=>{
+      ctx.beginPath();ctx.arc(ex,cy0,11,0,2*Math.PI);
+      ctx.strokeStyle='#1d4ed8';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ex,cy0,4.5,0,2*Math.PI);
+      ctx.fillStyle='#1d4ed8';ctx.fill();
+    });
+    ctx.font='bold 13px sans-serif';ctx.fillStyle='#1d4ed8';
+    ctx.textAlign='center';ctx.fillText('a',cx2,cy0-18);ctx.textAlign='left';
+
+    // 구분선 1
+    ctx.beginPath();ctx.moveTo(10,rowH);ctx.lineTo(W-10,rowH);
+    ctx.strokeStyle='rgba(203,213,225,.6)';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+
+    // ─ 선분 b (BC) - 중간 ─
+    const cy1=Math.floor(rowH*1.52);
+    const lb=cond.BC*u;
+    const bx1=cx2-lb/2, bx2=cx2+lb/2;
+    ctx.beginPath();ctx.moveTo(bx1,cy1);ctx.lineTo(bx2,cy1);
+    ctx.strokeStyle='#dc2626';ctx.lineWidth=3;ctx.setLineDash([]);ctx.stroke();
+    [bx1,bx2].forEach(ex=>{
+      ctx.beginPath();ctx.arc(ex,cy1,11,0,2*Math.PI);
+      ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ex,cy1,4.5,0,2*Math.PI);
+      ctx.fillStyle='#dc2626';ctx.fill();
+    });
+    ctx.font='bold 13px sans-serif';ctx.fillStyle='#dc2626';
+    ctx.textAlign='center';ctx.fillText('b',cx2,cy1-18);ctx.textAlign='left';
+
+    // 구분선 2
+    ctx.beginPath();ctx.moveTo(10,rowH*2);ctx.lineTo(W-10,rowH*2);
+    ctx.strokeStyle='rgba(203,213,225,.6)';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+
+    // ─ 끼인각 ∠B - 아래쪽 ─ (예각, 오른쪽으로 열린 형태)
+    const angCY=Math.floor(rowH*2.52);
+    const angCX=Math.floor(W*0.22);       // 꼭짓점 왼쪽 배치 → 예각이 오른쪽으로 열림
+    const angRad=cond.angB*Math.PI/180;
+    const armLen=Math.min(u*2.6, W*0.66);
+    // 변1: 오른쪽 수평
+    const e1x=angCX+armLen, e1y=angCY;
+    // 변2: 오른쪽 위 (예각 방향)
+    const e2x=angCX+armLen*Math.cos(angRad), e2y=angCY-armLen*Math.sin(angRad);
+
+    // 꼭짓점 스냅 링
+    ctx.beginPath();ctx.arc(angCX,angCY,14,0,2*Math.PI);
+    ctx.strokeStyle='rgba(5,150,105,.5)';ctx.lineWidth=1.8;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(angCX,angCY,5,0,2*Math.PI);
+    ctx.fillStyle='#059669';ctx.fill();
+
+    // 변1 수평 + 끝점 스냅 링
+    ctx.beginPath();ctx.moveTo(angCX,angCY);ctx.lineTo(e1x,e1y);
+    ctx.strokeStyle='#059669';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(e1x,e1y,10,0,2*Math.PI);
+    ctx.strokeStyle='rgba(5,150,105,.45)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(e1x,e1y,3.5,0,2*Math.PI);ctx.fillStyle='#059669';ctx.fill();
+
+    // 변2 예각 방향 + 끝점 스냅 링
+    ctx.beginPath();ctx.moveTo(angCX,angCY);ctx.lineTo(e2x,e2y);
+    ctx.strokeStyle='#059669';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(e2x,e2y,10,0,2*Math.PI);
+    ctx.strokeStyle='rgba(5,150,105,.45)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(e2x,e2y,3.5,0,2*Math.PI);ctx.fillStyle='#059669';ctx.fill();
+
+    // 각도 호 (0 → -angRad, 즉 0°에서 위쪽으로 angRad만큼)
+    ctx.beginPath();ctx.arc(angCX,angCY,28, -angRad, 0);
+    ctx.strokeStyle='#059669';ctx.lineWidth=2;ctx.stroke();
+
+    // 레이블
+    const lblAng=-angRad/2;
+    ctx.font='bold 12px sans-serif';ctx.fillStyle='#059669';
+    ctx.fillText('∠B',angCX+40*Math.cos(lblAng),angCY+40*Math.sin(lblAng)+4);
+    ctx.font='10px sans-serif';ctx.fillStyle='#64748b';
+    ctx.fillText('끼인각',angCX+6,angCY+20);
+
+    ctx.font='10px sans-serif';ctx.fillStyle='#64748b';
+    ctx.textAlign='center';ctx.fillText('📐 선분 a: AB길이 / 선분 b: BC길이 / ∠B: 끼인각',W/2,H-5);
+    ctx.textAlign='left';
+    return;
+  }
+
+  if(cond.type==='ASA'){
+    const u3=UNIT(), cx=W/2;
+
+    // ─ 선분 a (위쪽 1/3) ─
+    const rowH3=Math.floor(H/3);
+    const segCY=Math.floor(rowH3*0.52);
+    const x1=cx-cond.AB*u3/2, x2=cx+cond.AB*u3/2;
+    ctx.beginPath();ctx.moveTo(x1,segCY);ctx.lineTo(x2,segCY);
+    ctx.strokeStyle='#1d4ed8';ctx.lineWidth=3;ctx.stroke();
+    [x1,x2].forEach(ex=>{
+      ctx.beginPath();ctx.arc(ex,segCY,11,0,2*Math.PI);
+      ctx.strokeStyle='#1d4ed8';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ex,segCY,4.5,0,2*Math.PI);ctx.fillStyle='#1d4ed8';ctx.fill();
+    });
+    ctx.font='bold 13px sans-serif';ctx.fillStyle='#1d4ed8';
+    ctx.textAlign='center';ctx.fillText('a',cx,segCY-16);ctx.textAlign='left';
+
+    // 구분선
+    ctx.beginPath();ctx.moveTo(8,rowH3);ctx.lineTo(W-8,rowH3);
+    ctx.strokeStyle='rgba(203,213,225,.6)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+
+    // ─ 두 각도 (아래 2/3, 좌우 나란히) ─
+    const angDefs=[
+      {ang:cond.angA, col:'#7c3aed', lbl:'∠A', dir:1},   // A: 오른쪽
+      {ang:cond.angB, col:'#059669', lbl:'∠B', dir:-1},  // B: 왼쪽
+    ];
+    const cellW=Math.floor(W/2);
+    const angY=Math.floor(rowH3+rowH3*0.9);
+    const arm=Math.min(u3*2.2, cellW*0.4);
+
+    // 셀 경계선
+    ctx.beginPath();ctx.moveTo(cellW,rowH3+4);ctx.lineTo(cellW,H-14);
+    ctx.strokeStyle='rgba(203,213,225,.6)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+
+    angDefs.forEach((ad,k)=>{
+      // 꼭짓점: 왼쪽 셀은 중앙보다 약간 왼쪽, 오른쪽 셀은 약간 오른쪽
+      const acx= k===0 ? Math.floor(cellW*0.3) : Math.floor(cellW*1.25);
+      const rad=ad.ang*Math.PI/180;
+
+      // 꼭짓점 스냅 링
+      ctx.beginPath();ctx.arc(acx,angY,14,0,2*Math.PI);
+      ctx.strokeStyle=ad.col+'99';ctx.lineWidth=1.8;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(acx,angY,5,0,2*Math.PI);
+      ctx.fillStyle=ad.col;ctx.fill();
+
+      // 수평 변 + 끝점 스냅 링
+      const ex1={x:acx+ad.dir*arm, y:angY};
+      ctx.beginPath();ctx.moveTo(acx,angY);ctx.lineTo(ex1.x,ex1.y);
+      ctx.strokeStyle=ad.col;ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.arc(ex1.x,ex1.y,10,0,2*Math.PI);
+      ctx.strokeStyle=ad.col+'66';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ex1.x,ex1.y,3.5,0,2*Math.PI);ctx.fillStyle=ad.col;ctx.fill();
+
+      // 각도 방향 변 + 끝점 스냅 링
+      const ex2={x:acx+ad.dir*arm*Math.cos(rad), y:angY-arm*Math.sin(rad)};
+      ctx.beginPath();ctx.moveTo(acx,angY);ctx.lineTo(ex2.x,ex2.y);
+      ctx.strokeStyle=ad.col;ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.arc(ex2.x,ex2.y,10,0,2*Math.PI);
+      ctx.strokeStyle=ad.col+'66';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(ex2.x,ex2.y,3.5,0,2*Math.PI);ctx.fillStyle=ad.col;ctx.fill();
+
+      // 각도 호
+      const a1=k===0?-rad:Math.PI, a2=k===0?0:Math.PI+rad;
+      ctx.beginPath();ctx.arc(acx,angY,22,Math.min(a1,a2),Math.max(a1,a2));
+      ctx.strokeStyle=ad.col;ctx.lineWidth=2;ctx.stroke();
+
+      // 레이블
+      ctx.font='bold 12px sans-serif';ctx.fillStyle=ad.col;
+      ctx.textAlign='center';ctx.fillText(ad.lbl,acx,angY-arm-12);ctx.textAlign='left';
+    });
+
+    ctx.font='10px sans-serif';ctx.fillStyle='#64748b';ctx.textAlign='center';
+    ctx.fillText('📐 꼭짓점(●) → 변 끝점(○) 터치 = 길이/각도 재기',W/2,H-5);
+    ctx.textAlign='left';
+    return;
+  }
+} // end drawRef
+
+// ============================================================
+//  작도 공간 (오른쪽 패널)
+// ============================================================
+function mkSt(){return{tool:'compass',radius:null,tap1:null,history:[],pts:[],step:0};}
+const ST=[mkSt(),mkSt(),mkSt()];
+const PREV=[null,null,null];
+
+// 작도 공간의 기준점
+// A: 왼쪽 고정점 (시작점)
+// B: 학생이 SSS에서 교점으로 직접 결정 (pts에서 가져옴)
+// B의 기본값: A에서 오른쪽으로 AB단위 (스냅 참고용)
+function workAB(i){
+  const u=UNIT(), W=PANE_W, H=CVH;
+  const ab=COND[i].AB*u;
+  const margin=Math.max(20, Math.floor((W-ab)/2));
+  const ax=margin, ay=Math.round(H*0.75);
+  const bx=ax+ab, by=ay;
+  // SSS: B는 pts에서 가져옴 (없으면 기본값)
+  if(i===0){
+    const Bpt=ST[i]?ST[i].pts.find(p=>p.k==='B'):null;
+    return{A:{x:ax,y:ay}, B:Bpt?Bpt.p:{x:bx,y:by}};
+  }
+  return{A:{x:ax,y:ay}, B:{x:bx,y:by}};
+}
+
+// 스냅 - A만 기준점 (B는 학생이 직접 정함)
+function snapList(i){
+  const{A}=workAB(i);
+  return[{k:'A',p:A},...ST[i].pts];
+}
+function trySnap(i,pos){
+  let best=null,bd=Infinity;
+  const r=30;
+  snapList(i).forEach(({k,p})=>{const d=dist(pos,p);if(d<r&&d<bd){bd=d;best={k,p};}});
+  return best;
+}
+
+// 교점 계산
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function ccXY(c1,r1,c2,r2){
+  const dx=c2.x-c1.x,dy=c2.y-c1.y,d=Math.hypot(dx,dy);
+  if(d>r1+r2+6||d<Math.abs(r1-r2)-6)return[];  // 허용 오차 6px
+  const a=(r1*r1-r2*r2+d*d)/(2*d),h=Math.sqrt(Math.max(0,r1*r1-a*a));
+  const mx=c1.x+a*dx/d,my=c1.y+a*dy/d,ox=h*dy/d,oy=h*dx/d;
+  if(h<0.5)return[{x:mx,y:my}];
+  return[{x:mx+ox,y:my-oy},{x:mx-ox,y:my+oy}];
+}
+function lcXY(p1,p2,c,r){
+  const dx=p2.x-p1.x,dy=p2.y-p1.y,fx=p1.x-c.x,fy=p1.y-c.y;
+  const a=dx*dx+dy*dy,b=2*(fx*dx+fy*dy),cc=fx*fx+fy*fy-r*r;
+  const d=b*b-4*a*cc;if(d<0)return[];
+  const sq=Math.sqrt(d);
+  return[(-b-sq)/(2*a),(-b+sq)/(2*a)].map(t=>({x:p1.x+t*dx,y:p1.y+t*dy}));
+}
+function llXY(p1,p2,p3,p4){
+  const d1x=p2.x-p1.x,d1y=p2.y-p1.y,d2x=p4.x-p3.x,d2y=p4.y-p3.y;
+  const cr=d1x*d2y-d1y*d2x;if(Math.abs(cr)<.001)return null;
+  const t=((p3.x-p1.x)*d2y-(p3.y-p1.y)*d2x)/cr;
+  return{x:p1.x+t*d1x,y:p1.y+t*d1y};
+}
+function rayP(h){
+  const ang=Math.atan2(h.to.y-h.from.y,h.to.x-h.from.x),far=2000;
+  return{p1:{x:h.from.x-far*Math.cos(ang),y:h.from.y-far*Math.sin(ang)},
+         p2:{x:h.from.x+far*Math.cos(ang),y:h.from.y+far*Math.sin(ang)}};
+}
+function findInter(i,pos){
+  const his=ST[i].history;
+  const lines=his.filter(h=>h.type==='ray'||h.type==='seg');
+  const rays=his.filter(h=>h.type==='ray');
+  const arcs=his.filter(h=>h.type==='arc');
+  const usedPts=ST[i].pts.map(p=>p.p);
+  function isUsed(p){ return usedPts.some(u=>dist(u,p)<10); }
+
+  // 모든 교점 후보 수집 (순위 없음)
+  const candidates=[];
+  function addCand(p){
+    if(!p) return;
+    if(isUsed(p)) return;
+    if(p.x < -PANE_W || p.x > PANE_W*2) return;
+    if(p.y < -CVH    || p.y > CVH*2)    return;
+    candidates.push({p, d:dist(pos,p)});
+  }
+
+  // 반직선∩반직선
+  for(let a=0;a<rays.length;a++) for(let b=a+1;b<rays.length;b++){
+    const{p1:a1,p2:a2}=rayP(rays[a]), {p1:b1,p2:b2}=rayP(rays[b]);
+    addCand(llXY(a1,a2,b1,b2));
+  }
+  // 선분∩선분 / 선분∩반직선
+  for(let a=0;a<lines.length;a++) for(let b=a+1;b<lines.length;b++){
+    const{p1:a1,p2:a2}=rayP(lines[a]), {p1:b1,p2:b2}=rayP(lines[b]);
+    addCand(llXY(a1,a2,b1,b2));
+  }
+  // 원∩선
+  for(const ar of arcs) for(const ln of lines){
+    const{p1,p2}=rayP(ln);
+    lcXY(p1,p2,ar.center,ar.r).forEach(p=>addCand(p));
+  }
+  // 원∩원
+  for(let a=0;a<arcs.length;a++) for(let b=a+1;b<arcs.length;b++){
+    ccXY(arcs[a].center,arcs[a].r,arcs[b].center,arcs[b].r).forEach(p=>addCand(p));
+  }
+
+  if(candidates.length===0) return null;
+
+  // 터치 위치에서 가장 가까운 교점 반환
+  candidates.sort((a,b)=>a.d-b.d);
+  return candidates[0].p;
+}
+
+
+// 각도 스냅 (5°단위)
+function snapAng(from,to){
+  const raw=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
+  const sn=Math.round(raw/5)*5;
+  if(Math.abs(((raw-sn)+540)%360-180)<7){
+    const len=dist(from,to),rad=sn*Math.PI/180;
+    return{ok:true,deg:sn,to:{x:from.x+len*Math.cos(rad),y:from.y+len*Math.sin(rad)}};
+  }
+  return{ok:false,deg:raw,to};
+}
+
+// 터치 위치
+function getPos(i,e){
+  const c=WRK_CVS[i], r=c.getBoundingClientRect();
+  const t=e.changedTouches?e.changedTouches[0]:e;
+  return{x:(t.clientX-r.left)*(PANE_W/r.width),y:(t.clientY-r.top)*(CVH/r.height)};
+}
+
+// 교점 도구로 찍을 레이블 시퀀스
+// ① SSS: A에서 원으로 B 교점 → A,B에서 원으로 C 교점
+// ② SAS, ③ ASA: C 하나만
+const INTER_SEQ=[['B','C'],['P','Q',"P'",'C'],['PA','QA',"PA'",'PB','QB',"PB'",'C']];
+function nextLabel(i){
+  const used=ST[i].pts.map(p=>p.k);
+  return INTER_SEQ[i].find(l=>!used.includes(l))||'?';
+}
+
+// ============================================================
+//  이벤트
+// ============================================================
+function onTap(i,e){
+  e.preventDefault();
+  const pos=getPos(i,e),snap=trySnap(i,pos),s=ST[i];
+
+  if(s.tool==='compass'){
+    if(!s.tap1){
+      // 스냅 점 또는 작도 공간 어디서나 시작
+      const p=snap?snap.p:pos, k=snap?snap.k:'·';
+      s.tap1={k,p};
+      if(s.radius===null) setSB(i,'끝점을 터치해서 반지름을 재세요','sel');
+      else setSB(i,k+' 선택! 같은 점 재터치=원 / 다른 점=새 반지름','sel');
+    } else {
+      const p1=s.tap1.p,p2=snap?snap.p:pos,r=dist(p1,p2);
+      s.tap1=null;
+      if(r<28&&s.radius!==null){
+        s.history.push({type:'arc',center:p1,r:s.radius,label:nextLabel(i)});
+        setSB(i,'✅ 원 완성! 🔵 교점 도구로 교점을 찍으세요','ok');
+        updateStep(i);
+      } else if(r<8){
+        setSB(i,'⚠️ 너무 가까워요','err');
+      } else {
+        s.radius=r; updateRbox(i);
+        setSB(i,'📐 반지름 저장! 중심점 터치→원 그리기','ok');
+      }
+    }
+    drawWork(i); return;
+  }
+
+  if(s.tool==='ray'){
+    if(!s.tap1){
+      const p=snap?snap.p:pos,k=snap?snap.k:'·';
+      s.tap1={k,p};
+      setSB(i,k+' 선택! 방향 끝점을 터치하세요 (5°스냅)','sel');
+    } else {
+      const raw=snap?snap.p:pos, as=snapAng(s.tap1.p,raw);
+      s.history.push({type:'ray',from:s.tap1.p,fromKey:s.tap1.k,to:as.to,deg:as.deg,snapped:as.ok});
+      s.tap1=null;
+      setSB(i,'✅ 반직선 완성'+(as.ok?' ('+Math.round(as.deg)+'°)':''),'ok');
+      updateStep(i);
+    }
+    drawWork(i); return;
+  }
+
+  if(s.tool==='seg'){
+    if(!s.tap1){
+      if(!snap){setSB(i,'⚠️ 점 위를 터치하세요','err');return;}
+      s.tap1={k:snap.k,p:snap.p};
+      setSB(i,snap.k+' 선택! 두 번째 점을 터치하세요','sel');
+    } else {
+      if(!snap){setSB(i,'⚠️ 두 번째 점을 터치하세요','err');return;}
+      s.history.push({type:'seg',from:s.tap1.p,fromKey:s.tap1.k,to:snap.p,toKey:snap.k});
+      // 첫 선분: A pts 등록 (B는 제거 - 학생이 직접 교점으로 찍음)
+      if(s.history.filter(h=>h.type==='seg').length===1){
+        const{A}=workAB(i);
+        if(!s.pts.find(p=>p.k==='A')) s.pts.push({k:'A',p:A});
+      }
+      s.tap1=null;
+      setSB(i,'✅ 선분 완성!','ok');
+      updateStep(i);
+    }
+    drawWork(i); return;
+  }
+
+  if(s.tool==='inter'){
+    const pt=findInter(i,pos);
+    if(!pt){setSB(i,'⚠️ 교점을 찾을 수 없어요. 원/선이 만나는 곳을 터치하세요','err');return;}
+    const lbl=nextLabel(i);
+    s.history.push({type:'interPt',pt,label:lbl});
+    s.pts.push({k:lbl,p:pt});
+    setSB(i,'✅ 교점 '+lbl+' 표시!','ok');
+    updateStep(i);
+    drawWork(i); return;
+  }
+}
+
+// ============================================================
+//  단계 안내
+// ============================================================
+const STEPS=[
+  ['① 📐 선분 a 길이를 재고 A점에서 원을 그리세요',
+   '② 🔵 원 위의 점을 터치해서 B를 찍으세요',
+   '③ 📐 선분 b 길이를 재고 A점에서 원을 그리세요',
+   '④ 📐 선분 c 길이를 재고 B점에서 원을 그리세요',
+   '⑤ 🔵 두 원의 교점을 터치해서 C를 찍으세요',
+   '⑥ ✏️ A-B, B-C, A-C를 선분으로 연결하세요',
+   '✅ 완성! 확인 버튼을 누르세요'],
+  ['① ✏️ 선분 AB를 긋고 B에서 오른쪽으로 반직선을 그으세요',
+   '② 📐 왼쪽 ∠B의 꼭짓점에서 원 그리기 → 두 변과의 교점 P, Q를 찍으세요',
+   "③ 📐 왼쪽 P→Q 거리를 재고, 오른쪽 P'에서 원 그리기 → Q' 교점 찍기",
+   "④ 📏 B에서 Q' 방향으로 반직선 (∠B 복사 완성)",
+   "⑤ 📐 선분 b 길이를 재고 B에서 원 → C 교점 찍기",
+   "⑥ ✏️ A-B, A-C, B-C 선분으로 연결",
+   '✅ 완성! 확인 버튼을 누르세요'],
+  ['① ✏️ 선분 AB를 긋고 A, B에서 오른쪽/왼쪽으로 반직선을 그으세요',
+   '② 📐 ∠A 꼭짓점에서 원 → PA, QA 교점 찍기',
+   "③ 📐 PA→QA 거리 재고 PA'에서 원 → QA' 교점 → A에서 새 반직선",
+   '④ 📐 ∠B 꼭짓점에서 원 → PB, QB 교점 찍기',
+   "⑤ 📐 PB→QB 거리 재고 PB'에서 원 → QB' 교점 → B에서 새 반직선",
+   '⑥ 🔵 두 반직선 교점 C를 찍으세요',
+   '⑦ ✏️ A-C, B-C를 선분으로 연결하세요',
+   '✅ 완성! 확인 버튼을 누르세요'],
+];
+function getStep(i){
+  const s=ST[i], his=s.history;
+  const segs=his.filter(h=>h.type==='seg').length;
+  const rays=his.filter(h=>h.type==='ray').length;
+  const arcs=his.filter(h=>h.type==='arc').length;
+  const hasC=s.pts.some(p=>p.k==='C');
+  if(i===0){
+    const hasB=s.pts.some(p=>p.k==='B');
+    if(arcs===0) return 0;              // a 길이 재고 A에서 원
+    if(arcs===1&&!hasB) return 1;       // B 교점 찍기
+    if(hasB&&arcs===1) return 2;        // b 길이 재고 A에서 원
+    if(hasB&&arcs===2) return 3;        // c 길이 재고 B에서 원
+    if(hasB&&arcs>=3&&!hasC) return 4;  // C 교점 찍기
+    if(hasC&&segs<3) return 5;          // 선분 연결
+    return 6;
+  }
+  if(i===1){
+    const hasP=s.pts.some(p=>p.k==='P');
+    const hasQ=s.pts.some(p=>p.k==='Q');
+    const hasP2=s.pts.some(p=>p.k==="P'");
+    if(segs===0) return 0;       // 선분 AB + 반직선
+    if(arcs===0) return 1;       // B에서 원 → P,Q 교점
+    if(!hasP||!hasQ) return 1;   // P,Q 교점 찍기
+    if(!hasP2) return 2;         // P→Q 거리 재고 P'에서 원 → Q' 교점
+    if(rays<2) return 3;         // B→Q' 반직선
+    if(arcs<3) return 4;         // b 길이 재고 B에서 원 → C
+    if(!hasC) return 4;
+    if(segs<3) return 5;
+    return 6;
+  }
+  if(i===2){
+    const hasPa=s.pts.some(p=>p.k==='PA');
+    const hasQa=s.pts.some(p=>p.k==='QA');
+    const hasPa2=s.pts.some(p=>p.k==="PA'");
+    const hasPb=s.pts.some(p=>p.k==='PB');
+    const hasQb=s.pts.some(p=>p.k==='QB');
+    const hasPb2=s.pts.some(p=>p.k==="PB'");
+    if(segs===0) return 0;
+    if(arcs===0) return 1;
+    if(!hasPa||!hasQa) return 1;
+    if(!hasPa2) return 2;
+    if(rays<2) return 2;
+    if(!hasPb||!hasQb) return 3;
+    if(!hasPb2) return 4;
+    if(rays<4) return 4;
+    if(!hasC) return 5;
+    if(segs<3) return 6;
+    return 7;
+  }
+  return 0;
+}
+function updateStep(i){
+  const st=getStep(i);
+  const arr=STEPS[i];
+  document.getElementById('sd'+i).textContent=arr[Math.min(st,arr.length-1)];
+}
+
+// ============================================================
+//  완성 확인
+// ============================================================
+function doCheck(i){
+  const s=ST[i];
+  const segs=s.history.filter(h=>h.type==='seg').length;
+  const rays=s.history.filter(h=>h.type==='ray').length;
+  const arcs=s.history.filter(h=>h.type==='arc').length;
+  const hasC=s.pts.some(p=>p.k==='C');
+  let ok=false, msg='';
+
+  if(i===0){
+    const Bpt=s.pts.find(p=>p.k==='B');
+    if(arcs<1) msg='선분 a 길이를 재고 A에서 원을 그리세요.';
+    else if(!Bpt) msg='🔵 교점 도구로 원 위의 점 B를 찍으세요.';
+    else if(arcs<3) msg='선분 b, c 길이를 재고 A와 B에서 원을 그리세요.';
+    else if(!hasC) msg='🔵 두 원의 교점을 터치해서 C를 찍으세요.';
+    else if(segs<3) msg='A-B, B-C, A-C를 선분으로 모두 연결하세요.';
+    else{
+      const u=UNIT(), cond=COND[i];
+      const A=workAB(i).A;
+      const B=Bpt.p;
+      const C=s.pts.find(p=>p.k==='C')?.p;
+      if(!C){msg='교점 C가 없어요.'; }
+      else{
+        const ERR=0.28;
+        const abU=dist(A,B)/u, bcU=dist(B,C)/u, caU=dist(C,A)/u;
+        if(Math.abs(abU-cond.AB)/cond.AB>ERR)
+          msg=`AB 길이가 맞지 않아요. (현재≈${abU.toFixed(1)}, 목표=${cond.AB})`;
+        else if(Math.abs(bcU-cond.BC)/cond.BC>ERR)
+          msg=`BC 길이가 맞지 않아요. (현재≈${bcU.toFixed(1)}, 목표=${cond.BC})`;
+        else if(Math.abs(caU-cond.CA)/cond.CA>ERR)
+          msg=`CA 길이가 맞지 않아요. (현재≈${caU.toFixed(1)}, 목표=${cond.CA})`;
+        else ok=true;
+      }
+    }
+  }
+  if(i===1){
+    const hasP=s.pts.some(p=>p.k==='P');
+    const hasQ=s.pts.some(p=>p.k==='Q');
+    const hasP2=s.pts.some(p=>p.k==="P'");
+    if(segs<1) msg='선분 AB를 먼저 그으세요.';
+    else if(arcs<1) msg='B에서 컴퍼스로 원을 그어 P, Q 교점을 만드세요.';
+    else if(!hasP||!hasQ) msg='🔵 교점 도구로 P, Q를 찍으세요.';
+    else if(!hasP2) msg="P→Q 거리를 재고 P'에서 원 그리기 → 🔵 Q' 교점을 찍으세요.";
+    else if(!hasC) msg="B에서 Q' 방향 반직선을 긋고, b 길이로 원 → 🔵 교점 C를 찍으세요.";
+    else if(segs<2) msg='B-C, A-C를 선분으로 연결하세요.';
+    else ok=true;
+  }
+  if(i===2){
+    const hasPa=s.pts.some(p=>p.k==='PA');
+    const hasQa=s.pts.some(p=>p.k==='QA');
+    const hasPa2=s.pts.some(p=>p.k==="PA'");
+    const hasPb=s.pts.some(p=>p.k==='PB');
+    const hasQb=s.pts.some(p=>p.k==='QB');
+    const hasPb2=s.pts.some(p=>p.k==="PB'");
+    if(segs<1) msg='선분 AB를 먼저 그으세요.';
+    else if(arcs<1) msg='∠A 꼭짓점에서 컴퍼스로 원을 그리세요.';
+    else if(!hasPa||!hasQa) msg='🔵 원과 ∠A의 두 변 교점 PA, QA를 찍으세요.';
+    else if(!hasPa2) msg="PA→QA 거리를 재고 PA'에서 원 → 🔵 QA' 교점을 찍으세요.";
+    else if(!hasPb||!hasQb) msg='∠B 꼭짓점에서 원 그리기 → 🔵 PB, QB 교점을 찍으세요.';
+    else if(!hasPb2) msg="PB→QB 거리를 재고 PB'에서 원 → 🔵 QB' 교점을 찍으세요.";
+    else if(!hasC) msg='두 반직선의 교점 🔵 C를 찍으세요.';
+    else if(segs<2) msg='A-C, B-C를 선분으로 연결하세요.';
+    else ok=true;
+  }
+
+  if(ok){
+    document.getElementById('dm'+i).style.display='block';
+    document.getElementById('tab'+i).classList.add('done');
+    setSB(i,'🎉 완벽한 삼각형 작도!','ok');
+    recordLap(i);  // 완성 시간 기록
+    if(i<2){
+      const nt=document.getElementById('tab'+(i+1));
+      nt.classList.remove('locked');
+      nt.textContent='';
+      const sp=document.createElement('span');sp.className='tab-n';
+      sp.textContent=['②','③'][i];nt.appendChild(sp);
+      nt.appendChild(document.createTextNode(['두변+각(SAS)','한변+두각(ASA)'][i]));
+    }
+    if(i===2) setTimeout(()=>showFinalPopup(),600);
+  } else {
+    setSB(i,'❌ '+msg,'err');
+  }
+}
+
+// ============================================================
+//  되돌리기 / 초기화
+// ============================================================
+function doUndo(i){
+  const s=ST[i]; s.tap1=null;
+  if(!s.history.length){setSB(i,'더 이상 되돌릴 게 없어요','err');return;}
+  const last=s.history.pop();
+  if(last.type==='interPt') s.pts=s.pts.filter(p=>p.k!==last.label);
+  if(last.type==='seg'&&s.history.filter(h=>h.type==='seg').length===0){
+    s.pts=s.pts.filter(p=>p.k!=='A'&&p.k!=='B');
+  }
+  document.getElementById('dm'+i).style.display='none';
+  updateStep(i); drawWork(i); setSB(i,'↩ 되돌렸어요','');
+}
+function doReset(i){
+  const t=ST[i].tool; ST[i]=mkSt(); ST[i].tool=t;
+  updateRbox(i);
+  document.getElementById('dm'+i).style.display='none';
+  setTool(i,t,false); updateStep(i);
+  setSB(i,'전체를 지웠어요. 다시 시작하세요',''); drawWork(i);
+}
+
+// ============================================================
+//  도구 선택
+// ============================================================
+function setTool(i,tool,rd=true){
+  ST[i].tool=tool; ST[i].tap1=null;
+  ['seg','ray','compass','inter'].forEach(t=>{
+    document.getElementById('t'+i+'-'+t)?.classList.toggle('on',t===tool);
+  });
+  const msg={compass:ST[i].radius===null?'📐 두 점으로 반지름을 재세요':'📐 중심점 터치=원/다른점=새반지름',
+    ray:'📏 시작점→방향 터치 (5°자동스냅)',seg:'✏️ 첫 번째 점→두 번째 점',inter:'🔵 교점 위치를 터치하세요'};
+  setSB(i,msg[tool]||'','');
+  if(rd) drawWork(i);
+}
+function setSB(i,msg,type){
+  const el=document.getElementById('sb'+i);
+  el.className='sbar'+(type?' '+type:'');
+  document.getElementById('sm'+i).textContent=msg;
+}
+function updateRbox(i){
+  const s=ST[i],box=document.getElementById('rbox'+i),lbl=document.getElementById('rlbl'+i);
+  if(s.radius!==null){box.classList.add('show');lbl.textContent='📐 반지름≈'+(s.radius/UNIT()).toFixed(1)+'단위';}
+  else box.classList.remove('show');
+}
+function clearR(i){ST[i].radius=null;ST[i].tap1=null;updateRbox(i);setSB(i,'반지름 초기화','');drawWork(i);}
+
+// ============================================================
+//  작도 공간 그리기
+// ============================================================
+function drawWork(i){
+  const ctx=WRK_CTX[i], W=PANE_W, H=CVH, u=UNIT();
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fafcff'; ctx.fillRect(0,0,W,H);
+  // 격자
+  ctx.strokeStyle='rgba(100,116,139,.08)';ctx.lineWidth=.6;
+  for(let x=u;x<W;x+=u){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=u;y<H;y+=u){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  const{A,B}=workAB(i);
+  const s=ST[i], t1k=s.tap1?s.tap1.k:null;
+
+  // 기준점 스냅링 (A만)
+  snapList(i).forEach(({k,p})=>drawRing(ctx,p,t1k===k));
+
+  // A 고정점만 표시 (B는 학생이 직접 교점으로 찍음)
+  drawDot(ctx,A,'#1d4ed8',5); drawTxt(ctx,'A',A.x-15,A.y+5,'#1d4ed8');
+
+  // 히스토리
+  s.history.forEach(h=>{
+    if(h.type==='arc'){
+      ctx.beginPath();ctx.arc(h.center.x,h.center.y,h.r,0,2*Math.PI);
+      ctx.strokeStyle='#0891b2';ctx.lineWidth=1.8;ctx.setLineDash([]);ctx.stroke();
+    }
+    if(h.type==='ray'){
+      const ang=Math.atan2(h.to.y-h.from.y,h.to.x-h.from.x);
+      const len=1500, end={x:h.from.x+len*Math.cos(ang),y:h.from.y+len*Math.sin(ang)};
+      ctx.beginPath();ctx.moveTo(h.from.x,h.from.y);ctx.lineTo(end.x,end.y);
+      ctx.strokeStyle='#dc2626';ctx.lineWidth=2;ctx.setLineDash([9,5]);ctx.stroke();ctx.setLineDash([]);
+      const arr=end;
+      ctx.beginPath();ctx.moveTo(arr.x,arr.y);
+      ctx.lineTo(arr.x-12*Math.cos(ang-.42),arr.y-12*Math.sin(ang-.42));
+      ctx.lineTo(arr.x-12*Math.cos(ang+.42),arr.y-12*Math.sin(ang+.42));
+      ctx.closePath();ctx.fillStyle='#dc2626';ctx.fill();
+      if(h.snapped){
+        ctx.font='10px sans-serif';ctx.fillStyle='rgba(220,38,38,.7)';
+        ctx.fillText(Math.round(h.deg)+'°',h.from.x+14,h.from.y-8);
+      }
+    }
+    if(h.type==='seg'){
+      ctx.beginPath();ctx.moveTo(h.from.x,h.from.y);ctx.lineTo(h.to.x,h.to.y);
+      ctx.strokeStyle='#7c3aed';ctx.lineWidth=2.5;ctx.setLineDash([]);ctx.stroke();
+      drawDot(ctx,h.from,'#7c3aed',3.5);drawDot(ctx,h.to,'#7c3aed',3.5);
+    }
+    if(h.type==='interPt'){
+      drawDot(ctx,h.pt,'#dc2626',4);
+      ctx.beginPath();ctx.arc(h.pt.x,h.pt.y,8,0,2*Math.PI);
+      ctx.strokeStyle='rgba(220,38,38,.35)';ctx.lineWidth=1.2;ctx.stroke();
+      drawTxt(ctx,h.label,h.pt.x+7,h.pt.y+4,'#dc2626');
+    }
+  });
+
+  // 탭1 선택 표시
+  if(s.tap1){
+    ctx.beginPath();ctx.arc(s.tap1.p.x,s.tap1.p.y,10,0,2*Math.PI);
+    ctx.fillStyle='rgba(245,158,11,.7)';ctx.fill();
+  }
+
+  // 미리보기
+  if(s.tap1&&PREV[i]){
+    const from=s.tap1.p,to=PREV[i];
+    if(s.tool==='compass'){
+      const r=dist(from,to);
+      if(s.radius!==null&&r<12){
+        ctx.beginPath();ctx.arc(from.x,from.y,s.radius,0,2*Math.PI);
+        ctx.strokeStyle='rgba(8,145,178,.3)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+      } else {
+        ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);
+        ctx.strokeStyle='rgba(5,150,105,.5)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+      }
+    }
+    if(s.tool==='ray'){
+      const as=snapAng(from,to),t=as.to;
+      const ang=Math.atan2(t.y-from.y,t.x-from.x);
+      const end={x:from.x+1500*Math.cos(ang),y:from.y+1500*Math.sin(ang)};
+      ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(end.x,end.y);
+      ctx.strokeStyle=as.ok?'rgba(220,38,38,.65)':'rgba(220,38,38,.3)';
+      ctx.lineWidth=as.ok?1.8:1.2;ctx.setLineDash([8,5]);ctx.stroke();ctx.setLineDash([]);
+      if(as.ok){ctx.font='bold 10px sans-serif';ctx.fillStyle='rgba(220,38,38,.8)';
+        ctx.fillText(Math.round(as.deg)+'°📐',from.x+14,from.y-8);}
+    }
+    if(s.tool==='seg'){
+      ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);
+      ctx.strokeStyle='rgba(124,58,237,.4)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+  if(s.tool==='inter'&&PREV[i]){
+    const pt=findInter(i,PREV[i]);
+    if(pt){
+      ctx.beginPath();ctx.arc(pt.x,pt.y,14,0,2*Math.PI);
+      ctx.strokeStyle='rgba(220,38,38,.7)';ctx.lineWidth=2;
+      ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(pt.x,pt.y,5,0,2*Math.PI);
+      ctx.fillStyle='rgba(220,38,38,.65)';ctx.fill();
+      const lbl=nextLabel(i);
+      ctx.font='bold 11px sans-serif';ctx.fillStyle='rgba(220,38,38,.9)';
+      ctx.fillText(lbl,pt.x+9,pt.y-7);
+    }
+  }
+}
+
+// ── 헬퍼 ──────────────────────────────────────────────────
+function drawDot(ctx,p,col,r){ctx.beginPath();ctx.arc(p.x,p.y,r,0,2*Math.PI);ctx.fillStyle=col;ctx.fill();}
+function drawTxt(ctx,t,x,y,col){ctx.font='bold 12px sans-serif';ctx.fillStyle=col;ctx.fillText(t,x,y);}
+function drawRing(ctx,p,sel){
+  ctx.beginPath();ctx.arc(p.x,p.y,18,0,2*Math.PI);
+  ctx.strokeStyle=sel?'#f59e0b':'rgba(234,179,8,.45)';
+  ctx.lineWidth=sel?2.5:2;ctx.setLineDash(sel?[]:[6,5]);ctx.stroke();ctx.setLineDash([]);
+  if(sel){ctx.beginPath();ctx.arc(p.x,p.y,8,0,2*Math.PI);ctx.fillStyle='rgba(245,158,11,.65)';ctx.fill();}
+}
+
+// ============================================================
+//  탭 전환 / 힌트
+// ============================================================
+function goTab(n){
+  if(document.getElementById('tab'+n).classList.contains('locked'))return;
+  [0,1,2].forEach(j=>{
+    document.getElementById('tab'+j).classList.toggle('on',j===n);
+    document.getElementById('panel'+j).style.display=j===n?'block':'none';
+  });
+  setTimeout(()=>{resizeAll();drawRef(n);drawWork(n);updateStep(n);},30);
+}
+function toggleH(i){
+  const h=document.getElementById('hcont'+i),b=document.getElementById('htog'+i);
+  const show=h.style.display==='none';h.style.display=show?'block':'none';
+  b.textContent=show?'▲ 닫기':'▶ 작도 순서 보기';
+}
+
+// ============================================================
+//  이벤트 등록
+// ============================================================
+WRK_CVS.forEach((c,i)=>{
+  c.addEventListener('touchend',e=>{e.preventDefault();onTap(i,e);},{passive:false});
+  c.addEventListener('click',e=>onTap(i,e));
+  c.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(ST[i].tap1||ST[i].tool==='inter'){PREV[i]=getPos(i,e);drawWork(i);}
+  },{passive:false});
+  c.addEventListener('mousemove',e=>{PREV[i]=getPos(i,e);if(ST[i].tap1||ST[i].tool==='inter')drawWork(i);});
+  c.addEventListener('mouseleave',()=>{PREV[i]=null;drawWork(i);});
+});
+// 컴퍼스 반지름 재기: 조건 그림(ref)에서도 드래그 가능
+// ── 왼쪽 조건 그림에서 컴퍼스로 길이 재기 ──────────────────
+// 탭1: 시작점 / 탭2: 끝점 → 거리 = 반지름으로 저장
+REF_CVS.forEach((c,i)=>{
+  let refTap1=null;  // 첫 번째 탭 위치
+
+  function refPos(e){
+    const r=c.getBoundingClientRect();
+    const t=(e.touches&&e.touches.length)?e.touches[0]
+           :(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e;
+    return{x:(t.clientX-r.left)*(PANE_W/r.width),
+           y:(t.clientY-r.top)*(CVH/r.height)};
+  }
+
+  // 조건 그림 위의 선분 끝점 스냅 (SSS의 세 선분 끝점)
+  function refSnapPts(i){
+    const u=UNIT(), W=PANE_W, H=CVH, cond=COND[i];
+    const pts=[];
+    const cx=W/2;
+
+    if(cond.type==='SSS'){
+      // 세 선분 끝점
+      const rows=3, rowH=Math.floor(H/rows);
+      [cond.AB*u, cond.BC*u, cond.CA*u].forEach((len,k)=>{
+        const cy=rowH*(k+0.5);
+        pts.push({x:cx-len/2,y:cy},{x:cx+len/2,y:cy});
+      });
+    }
+
+    if(cond.type==='SAS'){
+      // 선분 a, b 끝점
+      const rowH=Math.floor(H/3);
+      const cy0=Math.floor(rowH*0.52), la=cond.AB*u;
+      pts.push({x:cx-la/2,y:cy0},{x:cx+la/2,y:cy0});
+      const cy1=Math.floor(rowH*1.52), lb=cond.BC*u;
+      pts.push({x:cx-lb/2,y:cy1},{x:cx+lb/2,y:cy1});
+      // 끼인각 꼭짓점 + 두 변 위의 점 (컴퍼스 원 그리기용)
+      const angCY=Math.floor(rowH*2.52);
+      const angCX=cx;
+      const angRad=cond.angB*Math.PI/180;
+      const armLen=Math.min(u*2.4, W*0.3);
+      pts.push({x:angCX,y:angCY});                                    // 꼭짓점 B (원 중심)
+      pts.push({x:angCX+armLen,y:angCY});                              // 수평변 끝점
+      pts.push({x:angCX+armLen*Math.cos(angRad),                       // 각도변 끝점 (예각 방향)
+                y:angCY-armLen*Math.sin(angRad)});
+    }
+
+    if(cond.type==='ASA'){
+      const u3a=u, rowH3=Math.floor(H/3);
+      // 선분 a 끝점
+      const segCY=Math.floor(rowH3*0.52);
+      pts.push({x:cx-cond.AB*u3a/2,y:segCY},{x:cx+cond.AB*u3a/2,y:segCY});
+      // 두 각도 꼭짓점 + 변 위 점
+      const cellW=Math.floor(W/2);
+      const angY=Math.floor(rowH3+rowH3*0.9);
+      const arm=Math.min(u3a*2.2, cellW*0.4);
+      const angDefs=[
+        {ang:cond.angA, dir:1,  acx:Math.floor(cellW*0.3)},
+        {ang:cond.angB, dir:-1, acx:Math.floor(cellW*1.25)},
+      ];
+      angDefs.forEach(ad=>{
+        const rad=ad.ang*Math.PI/180;
+        pts.push({x:ad.acx, y:angY});                               // 꼭짓점
+        pts.push({x:ad.acx+ad.dir*arm, y:angY});                    // 수평변 끝
+        pts.push({x:ad.acx+ad.dir*arm*Math.cos(rad), y:angY-arm*Math.sin(rad)}); // 각도변 끝
+      });
+    }
+
+    return pts;
+  }
+
+  function tryRefSnap(i,pos){
+    const pts=refSnapPts(i);
+    let best=null, bd=Infinity;
+    pts.forEach(p=>{
+      const d=dist(pos,p);
+      if(d<32&&d<bd){bd=d;best=p;}
+    });
+    return best;
+  }
+
+  // 조건 그림 위에 피드백 그리기
+  function drawRefFeedback(i){
+    drawRef(i); // 기본 그림 다시 그림
+    if(!refTap1) return;
+    const ctx=REF_CTX[i];
+    // 첫 탭 강조
+    ctx.beginPath();ctx.arc(refTap1.x,refTap1.y,10,0,2*Math.PI);
+    ctx.fillStyle='rgba(245,158,11,.7)';ctx.fill();
+    ctx.beginPath();ctx.arc(refTap1.x,refTap1.y,14,0,2*Math.PI);
+    ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='10px sans-serif';ctx.fillStyle='#78350f';ctx.textAlign='center';
+    ctx.fillText('끝점 터치',refTap1.x,refTap1.y-18);
+    ctx.textAlign='left';
+  }
+
+  function onRefTap(e){
+    const tool=ST[i].tool;
+    if(tool==='inter'){
+      e.preventDefault(); e.stopPropagation();
+      setSB(i,'💡 오른쪽 작도 공간에서 🔵 교점 도구로 교점을 찍으세요','sel');
+      return;
+    }
+    if(tool!=='compass') return;
+    e.preventDefault(); e.stopPropagation();
+    const pos=refPos(e);
+    const snap=tryRefSnap(i,pos);
+    const p=snap||pos;
+
+    if(!refTap1){
+      refTap1=p;
+      drawRefFeedback(i);
+      setSB(i,'✅ 시작점 선택! 이제 반대쪽 끝점을 터치하세요','sel');
+    } else {
+      const r=dist(refTap1,p);
+      if(r<8){
+        setSB(i,'⚠️ 너무 가까워요. 다른 점을 터치하세요','err');
+        refTap1=null; drawRef(i); return;
+      }
+      ST[i].radius=r; updateRbox(i);
+      refTap1=null; drawRef(i);
+      setSB(i,'📐 길이 저장! 오른쪽 작도 공간에서 중심점을 터치해 원을 그리세요','ok');
+    }
+  }
+
+  function onRefTouchMove(e){
+    if(ST[i].tool!=='compass'||!refTap1) return;
+    e.preventDefault();
+    // 드래그 중 미리보기
+    const pos=refPos(e);
+    const snap=tryRefSnap(i,pos);
+    const to=snap||pos;
+    drawRef(i);
+    const ctx=REF_CTX[i];
+    // 첫 탭 강조
+    ctx.beginPath();ctx.arc(refTap1.x,refTap1.y,10,0,2*Math.PI);
+    ctx.fillStyle='rgba(245,158,11,.7)';ctx.fill();
+    // 거리선 미리보기
+    ctx.beginPath();ctx.moveTo(refTap1.x,refTap1.y);ctx.lineTo(to.x,to.y);
+    ctx.strokeStyle='rgba(5,150,105,.7)';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    // 끝점 강조
+    if(snap){
+      ctx.beginPath();ctx.arc(snap.x,snap.y,8,0,2*Math.PI);
+      ctx.fillStyle='rgba(5,150,105,.5)';ctx.fill();
+    }
+    // 거리 표시
+    const r=dist(refTap1,to);
+    const u=UNIT();
+    ctx.font='bold 11px sans-serif';ctx.fillStyle='rgba(5,150,105,.9)';ctx.textAlign='center';
+    ctx.fillText((r/u).toFixed(1)+' 단위',(refTap1.x+to.x)/2,(refTap1.y+to.y)/2-10);
+    ctx.textAlign='left';
+  }
+
+  // 탭 취소 (컴퍼스 도구 변경 시)
+  function cancelRefTap(){
+    if(refTap1){refTap1=null;drawRef(i);}
+  }
+
+  // 기존 setTool 훅 - 도구 변경 시 ref 탭 초기화
+  const _origSetTool=window._refCancelHooks||(window._refCancelHooks={});
+  _origSetTool[i]=cancelRefTap;
+
+  c.addEventListener('touchstart', e=>{if(ST[i].tool==='compass')e.preventDefault();},{passive:false});
+  c.addEventListener('touchmove',  onRefTouchMove,{passive:false});
+  c.addEventListener('touchend',   onRefTap,{passive:false});
+  c.addEventListener('click',      onRefTap);
+});
+
+window.addEventListener('resize',()=>{
+  resizeAll();
+  [0,1,2].forEach(i=>{
+    if(document.getElementById('panel'+i).style.display!=='none'){
+      drawRef(i);drawWork(i);
+    }
+  });
+});
+
+// ── 초기화 ────────────────────────────────────────────────
+setTimeout(()=>{resizeAll();drawRef(0);drawWork(0);updateStep(0);},80);
+
+// ── 타이머 ────────────────────────────────────────────────
+const TMR={
+  start:Date.now(), elapsed:0, running:true, iv:null
+};
+function pad2(n){return String(n).padStart(2,'0');}
+function fmtT(ms){
+  const s=Math.floor(ms/1000);
+  return pad2(Math.floor(s/60))+':'+pad2(s%60);
+}
+function tickTimer(){
+  if(!TMR.running) return;
+  TMR.elapsed=Date.now()-TMR.start;
+  document.getElementById('tmr').textContent=fmtT(TMR.elapsed);
+}
+TMR.iv=setInterval(tickTimer,500);
+tickTimer();
+
+// 활동 완성 시 호출 — 3개 모두 완성되면 타이머 정지
+let doneCount=0;
+function recordLap(i){
+  doneCount++;
+  const done=doneCount;
+  document.getElementById('tmr-stat').textContent=done+' / 3 완성';
+  if(done===3){
+    TMR.running=false;
+    clearInterval(TMR.iv);
+  }
+}
+
+function showFinalPopup(){
+  document.getElementById('pop-time').textContent=fmtT(TMR.elapsed);
+  document.getElementById('popup').style.display='flex';
+}
+</script>
+</body>
+</html>
